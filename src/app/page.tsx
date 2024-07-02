@@ -3,10 +3,12 @@
 import type {
   ActionGetResponse,
   ActionPostResponse,
+  ActionRegistryGetResponse,
   LinkedAction,
+  RegisteredAction,
 } from "@/action";
 import Image from "next/image";
-import { useState, FormEvent, ChangeEvent } from "react";
+import { useState, FormEvent, ChangeEvent, useEffect } from "react";
 
 type ActionProps = ActionGetResponse & { url: string };
 
@@ -17,6 +19,19 @@ export default function Home() {
   const [data, setData] = useState<ActionGetResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [websites, setWebsites] = useState<RegisteredAction[]>([]);
+
+  useEffect(() => {
+    const task = async () => {
+      const res = await fetch("https://actions-registry.dialect.to/all");
+      const json: ActionRegistryGetResponse = await res.json();
+      setWebsites(json.websites);
+      console.log("Websites: %O", json.websites);
+      return json.websites;
+    };
+    task();
+  }, []);
+
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     fetchUrl();
@@ -25,6 +40,15 @@ export default function Home() {
   const fetchUrl = async () => {
     setLoading(true);
     setError(null);
+    const whitelist = websites.find((w) => {
+      const urlObj = new URL(url);
+      return w.state === "trusted" && urlObj.hostname === w.host;
+    });
+    if (whitelist == null) {
+      setError("URL is not whitelisted");
+      setLoading(false);
+      return;
+    }
     try {
       const response = await fetch(url, {
         headers: { Accept: "application/json" },

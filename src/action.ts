@@ -1,4 +1,3 @@
-
 export interface LinkedAction {
   /** URL endpoint for an action */
   href: string;
@@ -54,4 +53,13 @@ export interface ActionPostResponse {
   transaction: string;
   /** describes the nature of the transaction */
   message?: string;
+}
+
+export interface RegisteredAction {
+  host: string;
+  state: "trusted" | "node" | "blocked";
+}
+
+export interface ActionRegistryGetResponse {
+  websites: RegisteredAction[];
 }
