@@ -1,44 +1,20 @@
 "use client";
 
-import { url } from "inspector";
+import type {
+  ActionGetResponse,
+  ActionPostResponse,
+  LinkedAction,
+} from "@/action";
 import Image from "next/image";
-import { useState, useEffect, FormEvent, ChangeEvent } from "react";
+import { useState, FormEvent, ChangeEvent } from "react";
 
-type Action = {
-  label: string;
-  href: string;
-  parameters?: Parameter[];
-};
-
-type Parameter = {
-  name: string;
-  label: string;
-};
-
-type ActionMetadata = {
-  icon: string;
-  label: string;
-  title: string;
-  description: string;
-  links: {
-    actions: Action[];
-  };
-};
-
-type Props = ActionMetadata & { url: string };
-
-type ActionPostResponse = {
-  /** base64 encoded serialized transaction */
-  transaction: string;
-  /** describes the nature of the transaction */
-  message?: string;
-};
+type ActionProps = ActionGetResponse & { url: string };
 
 export default function Home() {
   const [url, setUrl] = useState(
     "https://tiplink.io/api/blinks/donate?dest=GDQtcVPfjcWfrnNWjCCe7pP3ds55t1WRn83wppXs6Ntw"
   );
-  const [data, setData] = useState<ActionMetadata | null>(null);
+  const [data, setData] = useState<ActionGetResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
@@ -56,7 +32,7 @@ export default function Home() {
       if (!response.ok) {
         throw new Error("Network response was not ok");
       }
-      const data: ActionMetadata = await response.json();
+      const data: ActionGetResponse = await response.json();
       console.log("Data: %O", data);
       setData(data);
     } catch (error: any) {
@@ -70,7 +46,7 @@ export default function Home() {
     setUrl(e.target.value);
   };
 
-  const props: Props = { ...data!, url };
+  const props: ActionProps = { ...data!, url };
   return (
     <div className="App">
       <h1>Fetch a Solana action and render the blink</h1>
@@ -88,7 +64,7 @@ export default function Home() {
   );
 }
 
-const ActionForm = (data: Props) => {
+const ActionForm = (data: ActionProps) => {
   const [input, setInput] = useState("");
   const handleButtonClick = async (href: string) => {
     // Implement the logic to handle donation click
@@ -109,7 +85,7 @@ const ActionForm = (data: Props) => {
     alert(`Transaction: ${tx.transaction}`);
   };
 
-  const renderActionButton = (action: Action) => {
+  const renderActionButton = (action: LinkedAction) => {
     if (action.parameters) {
       const name = action.parameters[0].name;
       return (
@@ -149,7 +125,13 @@ const ActionForm = (data: Props) => {
     <div>
       <h1>{data.title}</h1>
       <p>{data.description}</p>
-      <Image src={data.icon} alt={data.label} height="400" width="400" />
+      <Image
+        src={data.icon}
+        alt={data.label}
+        height="400"
+        width="400"
+        unoptimized
+      />
       <div>{buttons}</div>
     </div>
   );
